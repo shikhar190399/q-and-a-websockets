@@ -1,0 +1,39 @@
+/**
+ * TypeScript interfaces for the Q&A Dashboard
+ */
+
+// User types
+export interface User {
+  user_id: number;
+  username: string;
+  email: string;
+  created_at: string;
+}
+
+// Question types
+export interface Question {
+  question_id: number;
+  message: string;
+  status: "Pending" | "Escalated" | "Answered";
+  timestamp: string;
+  answer: string | null;
+  answered_by: number | null;
+  answered_at: string | null;
+}
+
+// API Response types
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
+export interface ErrorResponse {
+  detail: string;
+}
+
+// WebSocket message types
+export interface WebSocketMessage {
+  type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED";
+  data: Record<string, unknown>;
+}
+
