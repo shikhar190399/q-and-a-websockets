@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.routers import auth_router
+from app.routers import auth_router, questions_router
 
 # Create FastAPI application
 app = FastAPI(
@@ -55,6 +55,6 @@ def root():
 
 # Include routers
 app.include_router(auth_router)
-# app.include_router(questions.router)  # Coming next
+app.include_router(questions_router)
 # app.include_router(websocket.router)  # Coming next
 
