@@ -49,6 +49,11 @@ export function isLoggedIn(): boolean {
   return getToken() !== null;
 }
 
+// Logout - alias for removeToken
+export function logout(): void {
+  removeToken();
+}
+
 // Decode JWT token to get payload (without verification)
 export function decodeToken(token: string): Record<string, unknown> | null {
   try {

@@ -335,15 +335,3 @@ rm qa_database.db
 pip install -r requirements.txt
 ```
 
----
-
-## License
-
-MIT
-
----
-
-## Author
-
-Built as a Q&A Dashboard assignment.
-

@@ -1,36 +1,162 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Q&A Dashboard - Frontend
 
-## Getting Started
+A real-time Q&A dashboard built with Next.js, featuring WebSocket updates for instant communication.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Guest Access**: Anyone can view, submit, and answer questions
+- **Admin Access**: Logged-in users can mark questions as "Answered" or "Escalate" them
+- **Real-time Updates**: WebSocket integration for instant updates across all clients
+- **Responsive Design**: Works on desktop and mobile
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **HTTP Client**: XMLHttpRequest (as per requirements)
+- **Real-time**: WebSocket
+
+## Project Structure
+
+```
+frontend/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── dashboard/          # Main Q&A dashboard
+│   │   ├── login/              # Login page
+│   │   ├── register/           # Registration page
+│   │   ├── layout.tsx          # Root layout
+│   │   └── page.tsx            # Home (redirects to dashboard)
+│   │
+│   ├── components/             # React components
+│   │   ├── Header.tsx          # Navigation header
+│   │   ├── QuestionCard.tsx    # Individual question display
+│   │   ├── QuestionForm.tsx    # Submit new question
+│   │   └── QuestionList.tsx    # List of all questions
+│   │
+│   ├── hooks/                  # Custom React hooks
+│   │   └── useWebSocket.ts     # WebSocket subscription hook
+│   │
+│   └── lib/                    # Utilities and helpers
+│       ├── api/                # API client functions
+│       │   ├── auth.ts         # Auth endpoints
+│       │   ├── client.ts       # XMLHttpRequest wrapper
+│       │   ├── index.ts        # Exports
+│       │   └── questions.ts    # Question endpoints
+│       ├── auth.ts             # Token management
+│       ├── types.ts            # TypeScript interfaces
+│       └── websocket.ts        # WebSocket manager
+│
+├── .env.local                  # Environment variables
+├── package.json
+├── tailwind.config.ts
+└── tsconfig.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js 18+
+- npm or yarn
+- Backend server running on http://localhost:8000
 
-## Learn More
+### Installation
 
-To learn more about Next.js, take a look at the following resources:
+1. **Navigate to frontend directory**:
+   ```bash
+   cd frontend
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Create environment file**:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-## Deploy on Vercel
+4. **Configure environment** (`.env.local`):
+   ```
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6. **Open browser**: http://localhost:3000
+
+## Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Redirects to `/dashboard` |
+| `/dashboard` | Main Q&A forum with question list |
+| `/login` | User login form |
+| `/register` | New user registration |
+
+## User Roles
+
+### Guest (Not Logged In)
+- View all questions
+- Submit new questions
+- Answer questions
+
+### Admin (Logged In)
+- All guest permissions
+- Mark questions as "Answered"
+- Escalate questions (moves to top)
+- De-escalate questions
+
+## API Integration
+
+All API calls use XMLHttpRequest via the custom client in `lib/api/client.ts`:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/auth/register` | POST | Register new user |
+| `/auth/login` | POST | Login, returns JWT |
+| `/questions/` | GET | Get all questions |
+| `/questions/` | POST | Submit new question |
+| `/questions/{id}/answer` | POST | Answer a question |
+| `/questions/{id}/status` | PATCH | Update status (auth required) |
+
+## WebSocket Events
+
+| Event Type | Description |
+|------------|-------------|
+| `NEW_QUESTION` | New question submitted |
+| `QUESTION_ANSWERED` | Question received an answer |
+| `QUESTION_UPDATED` | Question status changed |
+
+## Scripts
+
+```bash
+# Development
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Type checking
+npx tsc --noEmit
+
+# Linting
+npm run lint
+```
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000` |
+| `NEXT_PUBLIC_WS_URL` | WebSocket URL | `ws://localhost:8000/ws` |

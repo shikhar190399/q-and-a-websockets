@@ -2,28 +2,39 @@
 
 import { useState } from "react";
 import { Question } from "@/lib/types";
-import { answerQuestion } from "@/lib/api";
+import { answerQuestion, updateQuestionStatus } from "@/lib/api";
 
 interface QuestionCardProps {
   question: Question;
-  onAnswered?: () => void;
+  isAdmin: boolean;
+  onUpdated?: () => void;
 }
 
-export default function QuestionCard({ question, onAnswered }: QuestionCardProps) {
+export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionCardProps) {
   const [showAnswerForm, setShowAnswerForm] = useState(false);
   const [answerText, setAnswerText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Format timestamp
-  const formatDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const formatDate = (timestamp: string | null | undefined) => {
+    if (!timestamp) return "Unknown";
+    
+    try {
+      const date = new Date(timestamp);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Invalid Date";
+      }
+      return date.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (err) {
+      return "Invalid Date";
+    }
   };
 
   // Status badge colors
@@ -63,11 +74,27 @@ export default function QuestionCard({ question, onAnswered }: QuestionCardProps
       await answerQuestion(question.question_id, answerText);
       setAnswerText("");
       setShowAnswerForm(false);
-      if (onAnswered) {
-        onAnswered();
+      if (onUpdated) {
+        onUpdated();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit answer");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: "Pending" | "Escalated" | "Answered") => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      await updateQuestionStatus(question.question_id, newStatus);
+      if (onUpdated) {
+        onUpdated();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update status");
     } finally {
       setIsSubmitting(false);
     }
@@ -100,24 +127,62 @@ export default function QuestionCard({ question, onAnswered }: QuestionCardProps
         </div>
       )}
 
-      {/* Answer button (only show if no answer yet) */}
-      {!question.answer && !showAnswerForm && (
-        <button
-          onClick={() => setShowAnswerForm(true)}
-          className="mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium"
-        >
-          Reply to this question
-        </button>
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mt-3 text-sm">
+          {error}
+        </div>
       )}
+
+      {/* Actions row */}
+      <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-slate-100">
+        {/* Answer button (only show if no answer yet) */}
+        {!question.answer && !showAnswerForm && (
+          <button
+            onClick={() => setShowAnswerForm(true)}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Reply
+          </button>
+        )}
+
+        {/* Admin controls - only visible when logged in */}
+        {isAdmin && question.status !== "Answered" && (
+          <>
+            <button
+              onClick={() => handleStatusChange("Answered")}
+              disabled={isSubmitting}
+              className="text-sm text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+            >
+              ✓ Mark Answered
+            </button>
+            {question.status !== "Escalated" && (
+              <button
+                onClick={() => handleStatusChange("Escalated")}
+                disabled={isSubmitting}
+                className="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+              >
+                ⚠ Escalate
+              </button>
+            )}
+          </>
+        )}
+
+        {/* De-escalate button for admins */}
+        {isAdmin && question.status === "Escalated" && (
+          <button
+            onClick={() => handleStatusChange("Pending")}
+            disabled={isSubmitting}
+            className="text-sm text-yellow-600 hover:text-yellow-800 font-medium disabled:opacity-50"
+          >
+            ↓ De-escalate
+          </button>
+        )}
+      </div>
 
       {/* Answer form */}
       {showAnswerForm && (
-        <div className="mt-4 border-t pt-4">
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-3 text-sm">
-              {error}
-            </div>
-          )}
+        <div className="mt-4 pt-4 border-t">
           <textarea
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
