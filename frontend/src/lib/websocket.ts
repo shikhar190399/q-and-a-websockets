@@ -5,7 +5,7 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws";
 type MessageHandler = (data: WebSocketMessage) => void;
 
 export interface WebSocketMessage {
-  type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED";
+  type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED" | "QUESTION_DELETED";
   data: unknown;
 }
 

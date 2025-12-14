@@ -8,7 +8,7 @@ import { getToken } from "../auth";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export interface RequestOptions {
-  method: "GET" | "POST" | "PATCH";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   body?: Record<string, unknown>;
   requiresAuth?: boolean;
 }
@@ -30,6 +30,11 @@ export function request<T>(endpoint: string, options: RequestOptions): Promise<T
     xhr.onreadystatechange = function () {
       if (xhr.readyState === 4) {
         if (xhr.status >= 200 && xhr.status < 300) {
+          // Handle 204 No Content (common for DELETE requests)
+          if (xhr.status === 204 || xhr.responseText === "") {
+            resolve(undefined as T);
+            return;
+          }
           try {
             const response = JSON.parse(xhr.responseText);
             resolve(response);

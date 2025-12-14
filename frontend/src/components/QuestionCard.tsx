@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Question } from "@/lib/types";
-import { answerQuestion, updateQuestionStatus } from "@/lib/api";
+import { answerQuestion, updateQuestionStatus, deleteQuestion } from "@/lib/api";
 
 interface QuestionCardProps {
   question: Question;
@@ -15,6 +15,7 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
   const [answerText, setAnswerText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Format timestamp
   const formatDate = (timestamp: string | null | undefined) => {
@@ -100,6 +101,35 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
     }
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    setShowDeleteConfirm(false);
+
+    try {
+      await deleteQuestion(question.question_id);
+      // On success, the question will be removed via WebSocket
+      // Component will unmount, so we don't need to reset isSubmitting
+      if (onUpdated) {
+        onUpdated();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete question");
+      setIsSubmitting(false);
+      // Re-open dialog on error so user can see the error message
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+    setError(null);
+  };
+
   return (
     <div className={`bg-white rounded-lg shadow-sm p-4 mb-3 ${getCardBorder(question.status)}`}>
       {/* Header: Status + Timestamp */}
@@ -178,6 +208,17 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
             ↓ De-escalate
           </button>
         )}
+
+        {/* Delete button for admins */}
+        {isAdmin && (
+          <button
+            onClick={handleDeleteClick}
+            disabled={isSubmitting}
+            className="text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+          >
+            🗑️ Delete
+          </button>
+        )}
       </div>
 
       {/* Answer form */}
@@ -208,6 +249,36 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">
+              Delete Question?
+            </h3>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete this question? This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded font-medium transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isSubmitting}
+                className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded font-medium transition disabled:opacity-50"
+              >
+                {isSubmitting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}

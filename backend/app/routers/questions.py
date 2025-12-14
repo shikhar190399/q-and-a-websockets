@@ -227,3 +227,43 @@ async def update_status(
     
     return question
 
+
+@router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)  # Admin only!
+):
+    """
+    Delete a question (Admin only).
+    
+    - Requires valid JWT token
+    - Permanently removes question from database
+    - Broadcasts deletion to all WebSocket clients
+    """
+    # Step 2: Find and validate question
+    question = db.query(Question).filter(Question.question_id == question_id).first()
+    
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found"
+        )
+    
+    # Step 3: Store question_id for WebSocket broadcast
+    deleted_question_id = question.question_id
+    
+    # Step 4: Delete from database
+    db.delete(question)
+    db.commit()
+    
+    # Step 5: Broadcast deletion via WebSocket
+    await manager.broadcast({
+        "type": "QUESTION_DELETED",
+        "data": {
+            "question_id": deleted_question_id
+        }
+    })
+    
+    # Step 6: Return 204 No Content (automatic)
+

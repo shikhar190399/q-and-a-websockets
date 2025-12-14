@@ -12,5 +12,6 @@ export {
   submitQuestion,
   answerQuestion,
   updateQuestionStatus,
+  deleteQuestion,
 } from "./questions";
 

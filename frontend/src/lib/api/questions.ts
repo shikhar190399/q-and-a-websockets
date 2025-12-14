@@ -65,3 +65,10 @@ export function updateQuestionStatus(
   });
 }
 
+export function deleteQuestion(questionId: number): Promise<void> {
+  return request<void>(`/questions/${questionId}`, {
+    method: "DELETE",
+    requiresAuth: true,
+  });
+}
+

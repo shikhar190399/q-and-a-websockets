@@ -197,6 +197,13 @@ export default function QuestionList({ refreshTrigger }: QuestionListProps) {
           return updated;
         });
         break;
+
+      case "QUESTION_DELETED":
+        // Remove deleted question from the list
+        setQuestions((prev) => 
+          prev.filter((q) => q.question_id !== questionData.question_id)
+        );
+        break;
     }
   }, []);
 

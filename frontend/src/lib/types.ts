@@ -39,7 +39,7 @@ export interface QuestionPaginatedResponse {
 
 // WebSocket message types
 export interface WebSocketMessage {
-  type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED";
+  type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED" | "QUESTION_DELETED";
   data: Record<string, unknown>;
 }
 
