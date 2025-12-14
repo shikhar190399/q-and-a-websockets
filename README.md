@@ -72,12 +72,15 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
+# Create .env file from example
 cp .env.example .env
+# Edit .env and set your SECRET_KEY (or use the default for development)
 
 # Start server
 uvicorn app.main:app --reload --port 8000
 ```
+
+**Note:** The database (`qa_database.db`) will be **automatically created** on first run. Tables are created automatically when the server starts.
 
 Backend runs at: http://localhost:8000
 
@@ -89,8 +92,9 @@ cd frontend
 # Install dependencies
 npm install
 
-# Create .env file
+# Create .env.local file from example
 cp .env.example .env.local
+# The default values should work if backend is on port 8000
 
 # Start dev server
 npm run dev
@@ -161,27 +165,123 @@ Connect to `ws://localhost:8000/ws` to receive real-time events:
 | answered_by | INTEGER | FK to users |
 | answered_at | DATETIME | Answer time |
 
+## Database
+
+### Auto-Creation
+- **The database is automatically created** when you first run the backend server
+- No manual database setup required!
+- Tables (`users`, `questions`) are created automatically via SQLAlchemy
+- Database file: `backend/qa_database.db` (SQLite)
+
+### What Happens When You Clone?
+1. **No database file exists** (it's in `.gitignore`)
+2. **First run**: Backend automatically creates `qa_database.db`
+3. **Tables are created** automatically via `main.py` startup event
+4. **Ready to use** - no manual setup needed!
+
+### Reset Database
+If you want to start fresh:
+```bash
+cd backend
+rm qa_database.db
+# Restart server - database will be recreated
+```
+
 ## Environment Variables
 
 ### Backend (.env)
+Copy `.env.example` to `.env`:
+```bash
+cd backend
+cp .env.example .env
 ```
-SECRET_KEY=your-secret-key
+
+Required variables:
+```
+SECRET_KEY=your-secret-key-change-this
 DATABASE_URL=sqlite:///./qa_database.db
 ```
 
+**Note:** For production, generate a secure SECRET_KEY:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
 ### Frontend (.env.local)
+Copy `.env.example` to `.env.local`:
+```bash
+cd frontend
+cp .env.example .env.local
+```
+
+Default values (usually no changes needed):
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
 ```
 
+## Troubleshooting
+
+### Backend Issues
+
+**Port 8000 already in use:**
+```bash
+# Kill process on port 8000
+lsof -ti:8000 | xargs kill -9
+# Or use a different port:
+uvicorn app.main:app --reload --port 8001
+```
+
+**Database not found:**
+- This is normal! Database is created automatically on first run
+- Just start the server and it will create `qa_database.db`
+
+**Module not found errors:**
+```bash
+# Make sure virtual environment is activated
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate      # Windows
+
+# Reinstall dependencies
+pip install -r requirements.txt
+```
+
+**Permission errors:**
+```bash
+# Make sure you have write permissions in backend directory
+chmod 755 backend
+```
+
+### Frontend Issues
+
+**Port 3000 already in use:**
+```bash
+# Kill process on port 3000
+lsof -ti:3000 | xargs kill -9
+# Or use a different port:
+npm run dev -- -p 3001
+```
+
+**Cannot connect to backend:**
+- Make sure backend is running on http://localhost:8000
+- Check `.env.local` has correct `NEXT_PUBLIC_API_URL`
+- Check browser console for CORS errors
+
+**WebSocket connection failed:**
+- Make sure backend is running
+- Check `.env.local` has correct `NEXT_PUBLIC_WS_URL`
+- WebSocket auto-reconnects, wait a few seconds
+
 ## Testing
 
 ### Backend
 ```bash
-# Test API
+# Test API health check
 curl http://localhost:8000/
 # Response: {"status":"ok","message":"Q&A Dashboard API is running"}
+
+# Test API docs
+# Open: http://localhost:8000/docs
 ```
 
 ### Frontend
