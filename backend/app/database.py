@@ -8,11 +8,16 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import DATABASE_URL
 
 # Create SQLAlchemy engine
-# check_same_thread is needed for SQLite only
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+# check_same_thread is only needed for SQLite, not PostgreSQL
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite-specific connection args
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    # PostgreSQL or other databases - no check_same_thread
+    engine = create_engine(DATABASE_URL)
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
