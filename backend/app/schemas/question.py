@@ -5,7 +5,7 @@ Defines request/response shapes for question-related endpoints.
 
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -56,6 +56,16 @@ class QuestionResponse(BaseModel):
 
     class Config:
         from_attributes = True  # Allows converting SQLAlchemy model to Pydantic
+
+
+class QuestionPaginatedResponse(BaseModel):
+    """
+    Schema for paginated question responses.
+    Used for cursor-based pagination.
+    """
+    questions: List[QuestionResponse]
+    next_cursor: Optional[int] = None
+    has_more: bool
 
 
 # ─────────────────────────────────────────────────────────────────

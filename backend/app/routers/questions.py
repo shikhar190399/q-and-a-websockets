@@ -3,10 +3,10 @@ Questions router.
 Handles all question-related endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import case
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from app.database import get_db
@@ -16,6 +16,7 @@ from app.schemas.question import (
     QuestionAnswer,
     QuestionStatusUpdate,
     QuestionResponse,
+    QuestionPaginatedResponse,
 )
 from app.dependencies import get_current_user
 from app.services.websocket import manager
@@ -27,12 +28,19 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[QuestionResponse])
-def get_questions(db: Session = Depends(get_db)):
+@router.get("/", response_model=QuestionPaginatedResponse)
+def get_questions(
+    limit: int = Query(default=20, ge=1, le=100, description="Number of questions per page"),
+    cursor: Optional[int] = Query(default=None, description="Last question_id from previous page"),
+    db: Session = Depends(get_db)
+):
     """
-    Get all questions.
+    Get paginated questions with cursor-based pagination.
     
-    Order:
+    - **limit**: Number of questions per page (1-100, default: 20)
+    - **cursor**: Last question_id from previous page (for next page)
+    
+    Returns questions sorted by:
     1. Escalated first
     2. Then Pending
     3. Then Answered
@@ -46,12 +54,32 @@ def get_questions(db: Session = Depends(get_db)):
         else_=4
     )
     
-    questions = db.query(Question).order_by(
+    # Build base query
+    query = db.query(Question)
+    
+    # Apply cursor filter if provided
+    if cursor:
+        query = query.filter(Question.question_id < cursor)
+    
+    # Apply sorting and fetch limit + 1 to check if there are more
+    questions = query.order_by(
         status_order,
         Question.timestamp.desc()
-    ).all()
+    ).limit(limit + 1).all()
     
-    return questions
+    # Check if there are more questions
+    has_more = len(questions) > limit
+    if has_more:
+        questions = questions[:limit]  # Remove the extra one
+    
+    # Get next cursor (last question_id if there are more)
+    next_cursor = questions[-1].question_id if questions and has_more else None
+    
+    return {
+        "questions": questions,
+        "next_cursor": next_cursor,
+        "has_more": has_more
+    }
 
 
 @router.post("/", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)

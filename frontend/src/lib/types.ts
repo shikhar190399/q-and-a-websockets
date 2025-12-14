@@ -31,6 +31,12 @@ export interface ErrorResponse {
   detail: string;
 }
 
+export interface QuestionPaginatedResponse {
+  questions: Question[];
+  next_cursor: number | null;
+  has_more: boolean;
+}
+
 // WebSocket message types
 export interface WebSocketMessage {
   type: "NEW_QUESTION" | "QUESTION_ANSWERED" | "QUESTION_UPDATED";

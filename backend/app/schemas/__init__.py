@@ -15,6 +15,7 @@ from app.schemas.question import (
     QuestionAnswer,
     QuestionStatusUpdate,
     QuestionResponse,
+    QuestionPaginatedResponse,
     WebSocketMessage,
 )
 
@@ -29,5 +30,6 @@ __all__ = [
     "QuestionAnswer",
     "QuestionStatusUpdate",
     "QuestionResponse",
+    "QuestionPaginatedResponse",
     "WebSocketMessage",
 ]

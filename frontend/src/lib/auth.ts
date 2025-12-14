@@ -56,6 +56,11 @@ export function logout(): void {
 
 // Decode JWT token to get payload (without verification)
 export function decodeToken(token: string): Record<string, unknown> | null {
+  // Only decode in browser environment
+  if (typeof window === "undefined") {
+    return null;
+  }
+  
   try {
     const payload = token.split(".")[1];
     const decoded = atob(payload);

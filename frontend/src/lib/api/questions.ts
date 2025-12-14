@@ -3,11 +3,26 @@
  * All question-related endpoints
  */
 
-import { Question } from "../types";
+import { Question, QuestionPaginatedResponse } from "../types";
 import { request } from "./client";
 
-export function getQuestions(): Promise<Question[]> {
-  return request<Question[]>("/questions/", {
+export function getQuestions(
+  limit?: number,
+  cursor?: number | null
+): Promise<QuestionPaginatedResponse> {
+  // Build query string
+  const params = new URLSearchParams();
+  if (limit !== undefined) {
+    params.append("limit", limit.toString());
+  }
+  if (cursor !== undefined && cursor !== null) {
+    params.append("cursor", cursor.toString());
+  }
+  
+  const queryString = params.toString();
+  const endpoint = `/questions/${queryString ? `?${queryString}` : ""}`;
+  
+  return request<QuestionPaginatedResponse>(endpoint, {
     method: "GET",
   });
 }
