@@ -18,13 +18,12 @@ app = FastAPI(
 
 # Configure CORS
 # Allows frontend (Next.js on port 3000) to communicate with backend
-# Also allows Netlify deployments
+# Also allows Vercel deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Local development
-        "https://*.netlify.app",  # Netlify deployments (all subdomains)
-        "https://*.vercel.app",   # Vercel deployments (all subdomains)
+        "https://q-and-a-websockets.vercel.app",  # Vercel deployment
     ],
     allow_credentials=True,
     allow_methods=["*"],
