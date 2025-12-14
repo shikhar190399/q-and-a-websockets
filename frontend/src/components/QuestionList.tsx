@@ -8,11 +8,8 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import QuestionCard from "./QuestionCard";
 
-interface QuestionListProps {
-  refreshTrigger?: number;
-}
 
-export default function QuestionList({ refreshTrigger }: QuestionListProps) {
+export default function QuestionList() {
   // Question data state
   const [questions, setQuestions] = useState<Question[]>([]);
   
@@ -27,8 +24,7 @@ export default function QuestionList({ refreshTrigger }: QuestionListProps) {
   // Error state
   const [error, setError] = useState<string | null>(null);
   
-  // Internal state
-  const [internalRefresh, setInternalRefresh] = useState(0);
+  // Admin state
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check if user is logged in (admin) - re-check periodically
@@ -217,15 +213,11 @@ export default function QuestionList({ refreshTrigger }: QuestionListProps) {
     isLoading: isLoadingMore,
   });
 
-  // Refresh when something is updated locally
-  const handleUpdated = () => {
-    setInternalRefresh((prev) => prev + 1);
-  };
-
-  // Fetch on mount and when refreshTrigger or internalRefresh changes
+  // Fetch only on initial mount
   useEffect(() => {
-    fetchQuestions();
-  }, [refreshTrigger, internalRefresh, fetchQuestions]);
+    fetchQuestions().then();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
@@ -270,7 +262,6 @@ export default function QuestionList({ refreshTrigger }: QuestionListProps) {
           key={question.question_id} 
           question={question} 
           isAdmin={isAdmin}
-          onUpdated={handleUpdated}
         />
       ))}
 

@@ -3,14 +3,15 @@
 import { useState } from "react";
 import { Question } from "@/lib/types";
 import { answerQuestion, updateQuestionStatus, deleteQuestion } from "@/lib/api";
+import { FAQ_SUGGESTIONS, FAQItem } from "@/lib/constants/faqSuggestions";
 
 interface QuestionCardProps {
   question: Question;
   isAdmin: boolean;
-  onUpdated?: () => void;
+  // onUpdated removed - WebSocket handles all updates
 }
 
-export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionCardProps) {
+export default function QuestionCard({ question, isAdmin }: QuestionCardProps) {
   const [showAnswerForm, setShowAnswerForm] = useState(false);
   const [answerText, setAnswerText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +63,33 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
     }
   };
 
+  // Find matching FAQ for a question text
+  const findMatchingFAQ = (questionText: string): FAQItem | null => {
+    const normalized = questionText.toLowerCase().trim();
+    return FAQ_SUGGESTIONS.find(
+      (faq) => faq.question.toLowerCase().trim() === normalized
+    ) || null;
+  };
+
+  // Handle showing answer form with auto-fill
+  const handleShowAnswerForm = () => {
+    // Check if question matches any FAQ
+    const matchingFAQ = findMatchingFAQ(question.message);
+    
+    if (matchingFAQ) {
+      // Auto-fill answer if match found
+      setAnswerText(matchingFAQ.answer);
+    } else {
+      // Empty answer field if no match
+      setAnswerText("");
+    }
+    
+    // Show the answer form
+    setShowAnswerForm(true);
+    // Clear any previous errors
+    setError(null);
+  };
+
   const handleSubmitAnswer = async () => {
     if (!answerText.trim()) {
       setError("Answer cannot be blank");
@@ -75,9 +103,8 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
       await answerQuestion(question.question_id, answerText);
       setAnswerText("");
       setShowAnswerForm(false);
-      if (onUpdated) {
-        onUpdated();
-      }
+      // Don't trigger manual refresh - WebSocket will handle the update
+      // This prevents the page blink/re-render issue
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit answer");
     } finally {
@@ -91,9 +118,8 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
 
     try {
       await updateQuestionStatus(question.question_id, newStatus);
-      if (onUpdated) {
-        onUpdated();
-      }
+      // Don't trigger manual refresh - WebSocket will handle the update
+      // This prevents the page blink/re-render issue
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update status");
     } finally {
@@ -114,9 +140,7 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
       await deleteQuestion(question.question_id);
       // On success, the question will be removed via WebSocket
       // Component will unmount, so we don't need to reset isSubmitting
-      if (onUpdated) {
-        onUpdated();
-      }
+      // Don't trigger manual refresh - WebSocket will handle the update
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete question");
       setIsSubmitting(false);
@@ -169,7 +193,7 @@ export default function QuestionCard({ question, isAdmin, onUpdated }: QuestionC
         {/* Answer button (only show if no answer yet) */}
         {!question.answer && !showAnswerForm && (
           <button
-            onClick={() => setShowAnswerForm(true)}
+            onClick={handleShowAnswerForm}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
             Reply

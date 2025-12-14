@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { submitQuestion } from "@/lib/api";
+import { FAQ_SUGGESTIONS, FAQItem } from "@/lib/constants/faqSuggestions";
 
-interface QuestionFormProps {
-  onQuestionSubmitted?: () => void;
-}
-
-export default function QuestionForm({ onQuestionSubmitted }: QuestionFormProps) {
+export default function QuestionForm() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleFAQSelect = (faq: FAQItem) => {
+    // Fill the question text field with the selected FAQ question
+    setMessage(faq.question);
+    // Clear any previous errors
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,10 +34,8 @@ export default function QuestionForm({ onQuestionSubmitted }: QuestionFormProps)
       // Clear form on success
       setMessage("");
       
-      // Notify parent component
-      if (onQuestionSubmitted) {
-        onQuestionSubmitted();
-      }
+      // Don't trigger manual refresh - WebSocket will handle the update
+      // This prevents the page blink/re-render issue
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit question");
     } finally {
@@ -55,6 +57,25 @@ export default function QuestionForm({ onQuestionSubmitted }: QuestionFormProps)
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* FAQ Suggestions Section */}
+        <div className="mb-4">
+          <p className="text-sm font-medium text-slate-600 mb-2">
+            Quick Questions:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {FAQ_SUGGESTIONS.map((faq, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => handleFAQSelect(faq)}
+                className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm border border-blue-200 transition-colors max-w-xs text-left"
+              >
+                {faq.question}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Question input */}
         <textarea
           value={message}
