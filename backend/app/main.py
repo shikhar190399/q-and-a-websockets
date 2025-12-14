@@ -24,6 +24,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Local development
         "https://*.netlify.app",  # Netlify deployments (all subdomains)
+        "https://*.vercel.app",   # Vercel deployments (all subdomains)
     ],
     allow_credentials=True,
     allow_methods=["*"],
