@@ -18,9 +18,13 @@ app = FastAPI(
 
 # Configure CORS
 # Allows frontend (Next.js on port 3000) to communicate with backend
+# Also allows Netlify deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://*.netlify.app",  # Netlify deployments (all subdomains)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
